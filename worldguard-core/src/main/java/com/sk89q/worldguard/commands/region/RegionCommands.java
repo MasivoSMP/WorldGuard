@@ -1228,7 +1228,7 @@ public final class RegionCommands extends RegionCommandsBase {
         if (args.argsLength() > 0) {
             String arg1 = args.getString(0);
             if (!arg1.equalsIgnoreCase("on") && !arg1.equalsIgnoreCase("off")) {
-                throw new CommandException("Allowed optional arguments are: on, off");
+                throw WorldGuard.getInstance().getMessageService().commandException("session.bypass-allowed-arguments");
             }
             shouldEnableBypass = arg1.equalsIgnoreCase("on");
         } else {
@@ -1236,10 +1236,10 @@ public final class RegionCommands extends RegionCommandsBase {
         }
         if (shouldEnableBypass) {
             session.setBypassDisabled(false);
-            player.print("You are now bypassing region protection (as long as you have permission).");
+            WorldGuard.getInstance().getMessageService().send(player, "session.bypass-enabled");
         } else {
             session.setBypassDisabled(true);
-            player.print("You are no longer bypassing region protection.");
+            WorldGuard.getInstance().getMessageService().send(player, "session.bypass-disabled");
         }
     }
 

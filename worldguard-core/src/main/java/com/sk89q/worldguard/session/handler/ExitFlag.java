@@ -22,6 +22,7 @@ package com.sk89q.worldguard.session.handler;
 import com.sk89q.worldedit.util.Location;
 import com.sk89q.worldedit.world.World;
 import com.sk89q.worldguard.LocalPlayer;
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.commands.CommandUtils;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.Flags;
@@ -59,7 +60,10 @@ public class ExitFlag extends FlagValueChangeHandler<State> {
     private void sendMessage(LocalPlayer player) {
         long now = System.currentTimeMillis();
 
-        if ((now - lastMessage) > MESSAGE_THRESHOLD && storedMessage != null && !storedMessage.isEmpty()) {
+        if ((now - lastMessage) > MESSAGE_THRESHOLD && storedMessage == null) {
+            WorldGuard.getInstance().getMessageService().send(player, "region.exit-deny");
+            lastMessage = now;
+        } else if ((now - lastMessage) > MESSAGE_THRESHOLD && !storedMessage.isEmpty()) {
             player.printRaw(CommandUtils.replaceColorMacros(storedMessage));
             lastMessage = now;
         }

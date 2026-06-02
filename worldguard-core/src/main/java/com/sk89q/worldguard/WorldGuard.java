@@ -38,6 +38,7 @@ import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import com.sk89q.worldguard.protection.flags.registry.SimpleFlagRegistry;
 import com.sk89q.worldguard.util.WorldGuardExceptionConverter;
 import com.sk89q.worldguard.util.concurrent.EvenMoreExecutors;
+import com.sk89q.worldguard.util.messages.MessageService;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +61,7 @@ public final class WorldGuard {
     private ProfileService profileService;
     private ListeningExecutorService executorService;
     private WorldGuardExceptionConverter exceptionConverter = new WorldGuardExceptionConverter();
+    private MessageService messageService;
 
     static {
         Flags.registerAll();
@@ -162,6 +164,16 @@ public final class WorldGuard {
         return exceptionConverter;
     }
 
+    public MessageService getMessageService() {
+        checkNotNull(messageService, "WorldGuard messages have not been loaded.");
+        return messageService;
+    }
+
+    public void setMessageService(MessageService messageService) {
+        checkNotNull(messageService);
+        this.messageService = messageService;
+    }
+
     /**
      * Checks to see if the sender is a player, otherwise throw an exception.
      *
@@ -173,7 +185,7 @@ public final class WorldGuard {
         if (sender instanceof LocalPlayer) {
             return (LocalPlayer) sender;
         } else {
-            throw new CommandException("A player is expected.");
+            throw getMessageService().commandException("commands.player-expected");
         }
     }
 

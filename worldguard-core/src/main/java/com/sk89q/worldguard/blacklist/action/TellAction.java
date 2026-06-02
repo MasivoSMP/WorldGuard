@@ -21,8 +21,10 @@ package com.sk89q.worldguard.blacklist.action;
 
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.serializer.plain.PlainComponentSerializer;
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.blacklist.BlacklistEntry;
 import com.sk89q.worldguard.blacklist.event.BlacklistEvent;
+import com.sk89q.worldguard.util.messages.MessageContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -49,7 +51,11 @@ public class TellAction extends RepeatGuardedAction {
                 // TODO Find a better way to do this String.format call that doesn't require a string.
                 event.getPlayer().print(TextComponent.of(String.format(message, PlainComponentSerializer.INSTANCE.serialize(event.getTarget().getFriendlyNameComponent()))));
             } else {
-                event.getPlayer().printError(TextComponent.of("You're not allowed to " + event.getDescription() + " ").append(event.getTarget().getFriendlyNameComponent()).append(TextComponent.of(".")));
+                WorldGuard.getInstance().getMessageService().send(event.getPlayer(), "blacklist.deny",
+                        MessageContext.builder()
+                                .put("action", event.getDescription())
+                                .put("target", PlainComponentSerializer.INSTANCE.serialize(event.getTarget().getFriendlyNameComponent()))
+                                .build());
             }
         }
 

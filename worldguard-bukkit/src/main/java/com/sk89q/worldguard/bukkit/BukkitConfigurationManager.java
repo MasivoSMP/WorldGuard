@@ -22,8 +22,10 @@ package com.sk89q.worldguard.bukkit;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.extension.platform.Capability;
 import com.sk89q.worldedit.world.World;
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.config.YamlConfigurationManager;
 import com.sk89q.worldedit.util.report.Unreported;
+import com.sk89q.worldguard.util.messages.MessageService;
 
 import java.io.File;
 import java.util.Collection;
@@ -54,6 +56,13 @@ public class BukkitConfigurationManager extends YamlConfigurationManager {
 
     @Override
     public void load() {
+        plugin.createDefaultConfiguration(new File(plugin.getDataFolder(), "lang.yml"), "lang.yml");
+        MessageService messageService = new MessageService(
+                new File(plugin.getDataFolder(), "lang.yml"),
+                () -> plugin.getResource("defaults/lang.yml"));
+        messageService.load();
+        WorldGuard.getInstance().setMessageService(messageService);
+
         super.load();
         this.extraStats = getConfig().getBoolean("custom-metrics-charts", true);
     }

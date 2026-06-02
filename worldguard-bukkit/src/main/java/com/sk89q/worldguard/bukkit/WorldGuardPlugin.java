@@ -76,6 +76,8 @@ import com.sk89q.worldguard.protection.managers.storage.file.DirectoryYamlDriver
 import com.sk89q.worldguard.protection.managers.storage.sql.SQLDriver;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.util.logging.RecordMessagePrefixer;
+import com.sk89q.worldguard.util.messages.LocalizedCommandException;
+import com.sk89q.worldguard.util.messages.MessageContext;
 import io.papermc.lib.PaperLib;
 import io.papermc.paper.ServerBuildInfo;
 import org.bstats.bukkit.Metrics;
@@ -322,7 +324,7 @@ public class WorldGuardPlugin extends JavaPlugin {
                 throw t;
             }
         } catch (CommandPermissionsException e) {
-            sender.sendMessage(ChatColor.RED + "You don't have permission.");
+            sendMessage(sender, "commands.no-permission");
         } catch (MissingNestedCommandException e) {
             sender.sendMessage(ChatColor.RED + e.getUsage());
         } catch (CommandUsageException e) {
@@ -330,6 +332,8 @@ public class WorldGuardPlugin extends JavaPlugin {
             sender.sendMessage(ChatColor.RED + e.getUsage());
         } catch (WrappedCommandException e) {
             sender.sendMessage(ChatColor.RED + e.getCause().getMessage());
+        } catch (LocalizedCommandException e) {
+            sendMessage(sender, e.getKey(), e.getContext());
         } catch (CommandException e) {
             sender.sendMessage(ChatColor.RED + e.getMessage());
         }
@@ -419,15 +423,15 @@ public class WorldGuardPlugin extends JavaPlugin {
     public WorldEditPlugin getWorldEdit() throws CommandException {
         Plugin worldEdit = getServer().getPluginManager().getPlugin("WorldEdit");
         if (worldEdit == null) {
-            throw new CommandException("WorldEdit does not appear to be installed.");
+            throw WorldGuard.getInstance().getMessageService().commandException("commands.worldedit-missing");
         } else if (!worldEdit.isEnabled()) {
-            throw new CommandException("WorldEdit does not appear to be enabled.");
+            throw WorldGuard.getInstance().getMessageService().commandException("commands.worldedit-disabled");
         }
 
         if (worldEdit instanceof WorldEditPlugin) {
             return (WorldEditPlugin) worldEdit;
         } else {
-            throw new CommandException("WorldEdit detection failed (report error).");
+            throw WorldGuard.getInstance().getMessageService().commandException("commands.worldedit-detection-failed");
         }
     }
 
@@ -555,6 +559,25 @@ public class WorldGuardPlugin extends JavaPlugin {
 
     public PlayerMoveListener getPlayerMoveListener() {
         return playerMoveListener;
+    }
+
+    public String getMessage(String key) {
+        return WorldGuard.getInstance().getMessageService().prefixedPlain(key);
+    }
+
+    public String getMessage(String key, MessageContext context) {
+        return WorldGuard.getInstance().getMessageService().prefixedPlain(key, context);
+    }
+
+    public void sendMessage(CommandSender sender, String key) {
+        sendMessage(sender, key, MessageContext.empty());
+    }
+
+    public void sendMessage(CommandSender sender, String key, MessageContext context) {
+        String message = getMessage(key, context);
+        if (!message.isEmpty()) {
+            sender.sendMessage(message);
+        }
     }
 
     private final LazyReference<Boolean> folia = LazyReference.from(() -> {

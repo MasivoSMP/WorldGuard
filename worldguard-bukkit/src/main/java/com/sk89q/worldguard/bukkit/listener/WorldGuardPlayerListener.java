@@ -38,8 +38,8 @@ import com.sk89q.worldguard.session.Session;
 import com.sk89q.worldguard.session.handler.GameModeFlag;
 import com.sk89q.worldguard.util.Entities;
 import com.sk89q.worldguard.util.command.CommandFilter;
+import com.sk89q.worldguard.util.messages.MessageContext;
 import com.sk89q.worldguard.util.profile.Profile;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -108,8 +108,7 @@ public class WorldGuardPlayerListener extends AbstractListener {
         WorldConfiguration wcfg = getWorldConfig(world);
 
         if (cfg.activityHaltToggle) {
-            player.sendMessage(ChatColor.YELLOW
-                    + "Intensive server activity has been HALTED.");
+            getPlugin().sendMessage(player, "player.halt-active");
 
             int removed = 0;
 
@@ -127,8 +126,7 @@ public class WorldGuardPlayerListener extends AbstractListener {
         }
 
         if (wcfg.fireSpreadDisableToggle) {
-            player.sendMessage(ChatColor.YELLOW
-                    + "Fire spread is currently globally disabled for this world.");
+            getPlugin().sendMessage(player, "player.fire-spread-disabled");
         }
 
         Events.fire(new ProcessPlayerEvent(player));
@@ -188,7 +186,7 @@ public class WorldGuardPlayerListener extends AbstractListener {
                     && !(cfg.hostKeysAllowFMLClients &&
                             (hostname.equals(hostKey + "\u0000FML\u0000") || hostname.equals(hostKey + "\u0000FML2\u0000")))) {
                 event.disallow(PlayerLoginEvent.Result.KICK_OTHER,
-                        "You did not join with the valid host key!");
+                        getPlugin().getMessage("player.invalid-host-key"));
                 log.warning("WorldGuard host key check: " +
                         player.getName() + " joined with '" + hostname +
                         "' but '" + hostKey + "' was expected. Kicked!");
@@ -221,7 +219,7 @@ public class WorldGuardPlayerListener extends AbstractListener {
             ItemStack heldItem = player.getInventory().getItem(slot);
             if (heldItem != null && heldItem.getAmount() < 0) {
                 player.getInventory().setItem(slot, null);
-                player.sendMessage(ChatColor.RED + "Infinite stack removed.");
+                getPlugin().sendMessage(player, "player.infinite-stack-removed");
             }
         }
     }
@@ -252,7 +250,7 @@ public class WorldGuardPlayerListener extends AbstractListener {
                 ItemStack heldItem = player.getInventory().getItem(slot);
                 if (heldItem != null && heldItem.getAmount() < 0) {
                     player.getInventory().setItem(slot, null);
-                    player.sendMessage(ChatColor.RED + "Infinite stack in slot #" + slot + " removed.");
+                    getPlugin().sendMessage(player, "player.infinite-stack-slot-removed", MessageContext.of("slot", slot));
                 }
             }
         }
@@ -264,7 +262,8 @@ public class WorldGuardPlayerListener extends AbstractListener {
                 ApplicableRegionSet set = WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery()
                         .getApplicableRegions(BukkitAdapter.adapt(block.getLocation()), RegionQuery.QueryOption.SORT);
                 if (set.size() > 0) {
-                    player.sendMessage(ChatColor.YELLOW + "Can you build? " + (set.testState(localPlayer, Flags.BUILD) ? "Yes" : "No"));
+                    getPlugin().sendMessage(player, "player.can-build",
+                            MessageContext.of("result", set.testState(localPlayer, Flags.BUILD) ? "Yes" : "No"));
 
                     StringBuilder str = new StringBuilder();
                     for (Iterator<ProtectedRegion> it = set.iterator(); it.hasNext();) {
@@ -274,9 +273,10 @@ public class WorldGuardPlayerListener extends AbstractListener {
                         }
                     }
 
-                    localPlayer.print("Applicable regions: " + str);
+                    WorldGuard.getInstance().getMessageService().send(localPlayer, "player.applicable-regions",
+                            MessageContext.of("regions", str));
                 } else {
-                    localPlayer.print("WorldGuard: No defined regions here!");
+                    WorldGuard.getInstance().getMessageService().send(localPlayer, "player.no-regions");
                 }
 
                 event.setUseItemInHand(Event.Result.DENY);
@@ -343,7 +343,7 @@ public class WorldGuardPlayerListener extends AbstractListener {
             ItemStack heldItem = player.getInventory().getItem(newSlot);
             if (heldItem != null && heldItem.getAmount() < 0) {
                 player.getInventory().setItem(newSlot, null);
-                player.sendMessage(ChatColor.RED + "Infinite stack removed.");
+                getPlugin().sendMessage(player, "player.infinite-stack-removed");
             }
         }
     }
@@ -370,15 +370,20 @@ public class WorldGuardPlayerListener extends AbstractListener {
                 if (!WorldGuard.getInstance().getPlatform().getSessionManager().hasBypass(localPlayer, localPlayer.getWorld())) {
                     boolean cancel = false;
                     String message = null;
+                    String fallbackKey = "region.entry-deny";
                     if (!setFrom.testState(localPlayer, Flags.ENDERPEARL)) {
                         cancel = true;
                         message = setFrom.queryValue(localPlayer, Flags.EXIT_DENY_MESSAGE);
+                        fallbackKey = "region.exit-deny";
                     } else if (!set.testState(localPlayer, Flags.ENDERPEARL)) {
                         cancel = true;
                         message = set.queryValue(localPlayer, Flags.ENTRY_DENY_MESSAGE);
+                        fallbackKey = "region.entry-deny";
                     }
                     if (cancel) {
-                        if (message != null && !message.isEmpty()) {
+                        if (message == null) {
+                            getPlugin().sendMessage(player, fallbackKey);
+                        } else if (!message.isEmpty()) {
                             player.sendMessage(message);
                         }
                         event.setCancelled(true);
@@ -389,15 +394,20 @@ public class WorldGuardPlayerListener extends AbstractListener {
                 if (!WorldGuard.getInstance().getPlatform().getSessionManager().hasBypass(localPlayer, localPlayer.getWorld())) {
                     boolean cancel = false;
                     String message = null;
+                    String fallbackKey = "region.entry-deny";
                     if (!setFrom.testState(localPlayer, Flags.CHORUS_TELEPORT)) {
                         cancel = true;
                         message = setFrom.queryValue(localPlayer, Flags.EXIT_DENY_MESSAGE);
+                        fallbackKey = "region.exit-deny";
                     } else if (!set.testState(localPlayer, Flags.CHORUS_TELEPORT)) {
                         cancel = true;
                         message = set.queryValue(localPlayer, Flags.ENTRY_DENY_MESSAGE);
+                        fallbackKey = "region.entry-deny";
                     }
                     if (cancel) {
-                        if (message != null && !message.isEmpty()) {
+                        if (message == null) {
+                            getPlugin().sendMessage(player, fallbackKey);
+                        } else if (!message.isEmpty()) {
                             player.sendMessage(message);
                         }
                         event.setCancelled(true);
@@ -430,7 +440,8 @@ public class WorldGuardPlayerListener extends AbstractListener {
 
             if (!test.apply(event.getMessage())) {
                 String message = set.queryValue(localPlayer, Flags.DENY_MESSAGE);
-                RegionProtectionListener.formatAndSendDenyMessage("use " + event.getMessage(), localPlayer, message);
+                RegionProtectionListener.formatAndSendDenyMessage("command", localPlayer, message,
+                        "region.deny", MessageContext.of("command", event.getMessage()));
                 event.setCancelled(true);
                 return;
             }
@@ -438,7 +449,7 @@ public class WorldGuardPlayerListener extends AbstractListener {
 
         if (cfg.blockInGameOp) {
             if (opPattern.matcher(event.getMessage()).matches()) {
-                player.sendMessage(ChatColor.RED + "/op and /deop can only be used in console (as set by a WG setting).");
+                getPlugin().sendMessage(player, "player.op-command-blocked");
                 event.setCancelled(true);
                 return;
             }
