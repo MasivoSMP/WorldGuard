@@ -23,6 +23,7 @@ import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.bukkit.util.Entities;
+import com.sk89q.worldguard.bukkit.util.PaperInterop;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -33,6 +34,7 @@ import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.projectiles.ProjectileSource;
 
 public class InvincibilityListener extends AbstractListener {
 
@@ -71,12 +73,16 @@ public class InvincibilityListener extends AbstractListener {
                     EntityDamageByEntityEvent byEntityEvent = (EntityDamageByEntityEvent) event;
                     Entity attacker = byEntityEvent.getDamager();
 
-                    if (attacker instanceof Projectile && ((Projectile) attacker).getShooter() instanceof Entity) {
-                        attacker = (Entity) ((Projectile) attacker).getShooter();
+                    if (attacker instanceof Projectile projectile && PaperInterop.isOwnedByCurrentRegion(projectile)) {
+                        ProjectileSource shooter = projectile.getShooter();
+                        if (shooter instanceof Entity shooterEntity && PaperInterop.isOwnedByCurrentRegion(shooterEntity)) {
+                            attacker = shooterEntity;
+                        }
                     }
 
                     if (getWorldConfig(player.getWorld()).regionInvinciblityRemovesMobs
                             && attacker instanceof LivingEntity && !(attacker instanceof Player)
+                            && PaperInterop.isOwnedByCurrentRegion(attacker)
                             && !(attacker instanceof Tameable && ((Tameable) attacker).isTamed())) {
                         attacker.remove();
                     }

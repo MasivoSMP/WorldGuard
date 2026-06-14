@@ -22,6 +22,7 @@ package com.sk89q.worldguard.bukkit.listener;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.bukkit.util.PaperInterop;
 import com.sk89q.worldguard.config.WorldConfiguration;
 import com.sk89q.worldguard.protection.association.RegionAssociable;
 import com.sk89q.worldguard.protection.flags.Flags;
@@ -60,10 +61,14 @@ public class WorldGuardHangingListener extends AbstractListener {
         if (event instanceof HangingBreakByEntityEvent) {
             HangingBreakByEntityEvent entityEvent = (HangingBreakByEntityEvent) event;
             Entity removerEntity = entityEvent.getRemover();
-            if (removerEntity instanceof Projectile) {
-                Projectile projectile = (Projectile) removerEntity;
-                ProjectileSource remover = projectile.getShooter(); 
-                removerEntity = (remover instanceof LivingEntity ? (LivingEntity) remover : null);
+            if (removerEntity instanceof Projectile projectile) {
+                if (!PaperInterop.isOwnedByCurrentRegion(projectile)) {
+                    removerEntity = null;
+                } else {
+                    ProjectileSource remover = projectile.getShooter();
+                    removerEntity = (remover instanceof LivingEntity livingEntity
+                            && PaperInterop.isOwnedByCurrentRegion(livingEntity) ? livingEntity : null);
+                }
             }
 
             if (!(removerEntity instanceof Player)) {

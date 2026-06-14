@@ -28,6 +28,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.bukkit.cause.Cause;
 import com.sk89q.worldguard.bukkit.util.Entities;
 import com.sk89q.worldguard.bukkit.util.InteropUtils;
+import com.sk89q.worldguard.bukkit.util.PaperInterop;
 import com.sk89q.worldguard.config.ConfigurationManager;
 import com.sk89q.worldguard.config.WorldConfiguration;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -289,9 +290,14 @@ public class WorldGuardEntityListener extends AbstractListener {
     private void onEntityDamageByProjectile(EntityDamageByEntityEvent event) {
         Entity defender = event.getEntity();
         Entity attacker;
-        ProjectileSource source = ((Projectile) event.getDamager()).getShooter();
-        if (source instanceof LivingEntity) {
-            attacker = (LivingEntity) source;
+        Entity damager = event.getDamager();
+        if (!PaperInterop.isOwnedByCurrentRegion(damager)) {
+            return;
+        }
+
+        ProjectileSource source = ((Projectile) damager).getShooter();
+        if (source instanceof LivingEntity livingEntity && PaperInterop.isOwnedByCurrentRegion(livingEntity)) {
+            attacker = livingEntity;
         } else {
             return;
         }

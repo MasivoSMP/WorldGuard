@@ -25,6 +25,7 @@ import com.sk89q.worldguard.bukkit.BukkitWorldConfiguration;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.bukkit.internal.WGMetadata;
 import com.sk89q.worldguard.bukkit.util.Entities;
+import com.sk89q.worldguard.bukkit.util.PaperInterop;
 import io.papermc.lib.PaperLib;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -286,6 +287,10 @@ public final class Cause {
             }
             for (Object o : element) {
                 if (o == null || seen.contains(o)) {
+                    continue;
+                }
+
+                if (o instanceof Entity entity && !PaperInterop.isOwnedByCurrentRegion(entity)) {
                     continue;
                 }
 

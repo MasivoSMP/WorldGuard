@@ -154,10 +154,16 @@ public final class Entities {
     public static Entity getShooter(Entity entity) {
 
         while (entity instanceof Projectile) {
+            if (!PaperInterop.isOwnedByCurrentRegion(entity)) {
+                return entity;
+            }
+
             Projectile projectile = (Projectile) entity;
             ProjectileSource remover = projectile.getShooter();
-            if (remover instanceof Entity && remover != entity) {
-                entity = (Entity) remover;
+            if (remover instanceof Entity removerEntity
+                    && removerEntity != entity
+                    && PaperInterop.isOwnedByCurrentRegion(removerEntity)) {
+                entity = removerEntity;
             } else {
                 return entity;
             }

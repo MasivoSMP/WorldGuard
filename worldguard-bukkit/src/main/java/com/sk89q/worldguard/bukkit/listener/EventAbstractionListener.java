@@ -852,13 +852,16 @@ public class EventAbstractionListener extends AbstractListener {
 
     @EventHandler(ignoreCancelled = true)
     public void onExpBottle(ExpBottleEvent event) {
+        if (!PaperInterop.isOwnedByCurrentRegion(event.getEntity())) {
+            return;
+        }
+
         if (Events.fireAndTestCancel(new SpawnEntityEvent(event, create(event.getEntity()), event.getEntity().getLocation(), EntityType.EXPERIENCE_ORB))) {
             event.setExperience(0);
 
             // Give the player back his or her XP bottle
             ProjectileSource shooter = event.getEntity().getShooter();
-            if (shooter instanceof Player) {
-                Player player = (Player) shooter;
+            if (shooter instanceof Player player && PaperInterop.isOwnedByCurrentRegion(player)) {
                 if (player.getGameMode() != GameMode.CREATIVE) {
                     player.getInventory().addItem(new ItemStack(Material.EXPERIENCE_BOTTLE, 1));
                 }

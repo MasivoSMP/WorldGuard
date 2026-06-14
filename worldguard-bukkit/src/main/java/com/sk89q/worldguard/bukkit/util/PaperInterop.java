@@ -19,7 +19,9 @@
 
 package com.sk89q.worldguard.bukkit.util;
 
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import io.papermc.lib.PaperLib;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -60,5 +62,28 @@ public class PaperInterop {
         }
 
         return CompletableFuture.completedFuture(entity.teleport(location));
+    }
+
+    public static boolean isOwnedByCurrentRegion(@Nonnull Entity entity) {
+        if (!PaperLib.isPaper()) {
+            return true;
+        }
+
+        boolean folia;
+        try {
+            folia = WorldGuardPlugin.inst().isFolia();
+        } catch (RuntimeException | LinkageError e) {
+            return true;
+        }
+
+        if (!folia) {
+            return true;
+        }
+
+        try {
+            return Bukkit.getServer().isOwnedByCurrentRegion(entity);
+        } catch (RuntimeException | LinkageError e) {
+            return false;
+        }
     }
 }
