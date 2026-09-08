@@ -1,37 +1,61 @@
 pluginManagement {
+    // Keep EngineHub plugin mirrors explicit; dependency repositories also need local Pinac.
     repositories {
-        gradlePluginPortal()
         maven {
             name = "EngineHub"
-            url = uri("https://maven.enginehub.org/repo/")
+            url = uri("https://repo.enginehub.org/libs-release/")
+            mavenContent {
+                releasesOnly()
+                includeGroupAndSubgroups("com.sk89q")
+                includeGroupAndSubgroups("org.enginehub")
+            }
+        }
+        maven {
+            name = "EngineHub Maven Central Mirror"
+            url = uri("https://repo.enginehub.org/internal/maven-central-proxy/")
+            mavenContent {
+                releasesOnly()
+            }
+        }
+        maven {
+            name = "EngineHub Gradle Plugin Portal Mirror"
+            url = uri("https://repo.enginehub.org/internal/plugin-portal-proxy/")
+            mavenContent {
+                releasesOnly()
+            }
         }
     }
 }
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 dependencyResolutionManagement {
     repositories {
+        mavenLocal { content { includeGroup("io.canvasmc.pinac") } }
+        maven { url = uri("https://maven.canvasmc.io/public/") }
         maven {
-            name = "EngineHub"
-            url = uri("https://maven.enginehub.org/repo/")
+            name = "PaperMC"
+            url = uri("https://repo.papermc.io/repository/maven-public/")
         }
-        gradle.settingsEvaluated {
-            // Duplicates repositoriesHelper.kt, since we can't import it
-            val allowedPrefixes = listOf(
-                "https://maven.enginehub.org",
-                "https://repo.maven.apache.org/maven2/",
-                "file:"
-            )
-
-            for (repo in this@repositories) {
-                if (repo is MavenArtifactRepository) {
-                    val urlString = repo.url.toString()
-                    check(allowedPrefixes.any { urlString.startsWith(it) }) {
-                        "Only EngineHub/Central repositories are allowed: ${repo.url} found"
-                    }
-                }
+        maven {
+            name = "EngineHub (Non-Mirrored)"
+            url = uri("https://repo.enginehub.org/libs-release/")
+        }
+        maven {
+            name = "EngineHub Legacy Third-Party"
+            url = uri("https://repo.enginehub.org/artifactory/libs-release/")
+            content {
+                includeGroup("org.khelekore")
             }
+        }
+        maven {
+            url = uri("https://maven.enginehub.org/repo/")
+            content { includeGroup("com.sk89q.lib") }
+        }
+        mavenCentral()
+        maven {
+            name = "Minecraft Libraries"
+            url = uri("https://libraries.minecraft.net/")
         }
     }
 }
